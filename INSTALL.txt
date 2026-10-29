@@ -1,0 +1,58 @@
+Superflight Co-op 0.2.0 - install (Windows, Steam version)
+
+Everyone who plays installs this the same way. Takes about two minutes.
+
+1. Find the game folder.
+   Steam > Library > right-click Superflight > Manage > Browse local files.
+   You should see superflight.exe there.
+
+2. Install BepInEx 5 (the mod loader).
+   Download BepInEx_win_x64_5.4.23.6.zip from
+   https://github.com/BepInEx/BepInEx/releases/tag/v5.4.23.6
+   SHA-256: 6c57a714a892efb4e9e1fef63d608a3391f30ec984031c465404e4ee381a0755
+   Extract it straight into the game folder, next to superflight.exe.
+   Afterwards the folder has a BepInEx folder, winhttp.dll and doorstop_config.ini.
+
+3. Start the game once, then close it. BepInEx creates its folders on first run.
+
+4. Copy SuperflightCoop.dll from this zip into
+   <game folder>\BepInEx\plugins\SuperflightCoop\
+   (create the SuperflightCoop folder).
+
+5. Start the game. A "Superflight Co-op" window appears over the menu.
+   F1 hides and shows it.
+
+Play with Steam friends (no router setup)
+   Host:   click "Host for Steam friends", then "Invite friends (Steam overlay)"
+           and pick your friends. They need Steam running and this plugin installed.
+   Friend: accept the invite in the Steam overlay (Shift+Tab). If the game is not
+           running, Steam starts it and the plugin joins by itself.
+   Fallback if the overlay is off: the host reads the lobby code from the co-op
+   window and sends it; you paste it in the "Lobby" box and click Join.
+
+Play over direct IP (LAN, VPN, or a forwarded port)
+   Host:   type a port (default 4444), click "Host (direct IP)". Friends outside
+           your network need that UDP port forwarded on your router, or everyone
+           on the same VPN (Tailscale, ZeroTier, Radmin).
+   Friend: type host:port and click Join.
+
+In flight
+   Your friends' wingsuits show with name and score. A portal or falling out of
+   the level opens a choice: proceed to the next level or respawn here, with a
+   scoreboard. The host's "proceed" sends the new level; a friend gets the same
+   choice at their next portal, fall-out or crash. Enter/Space = proceed,
+   R/Backspace = respawn.
+
+Leaderboards
+   Steam leaderboard uploads are off while you are in a co-op session, so
+   modded runs never touch the boards. Solo play without hosting or joining is
+   unchanged.
+
+Uninstall
+   Delete BepInEx\plugins\SuperflightCoop. To remove BepInEx too, delete the
+   BepInEx folder, winhttp.dll and doorstop_config.ini from the game folder.
+
+Problems
+   The log is <game folder>\BepInEx\LogOutput.log. It should contain
+   "patches applied: 9 methods" and, with Steam running, "steam: lobby
+   callbacks registered". Settings: BepInEx\config\org.coopanything.superflight.cfg
