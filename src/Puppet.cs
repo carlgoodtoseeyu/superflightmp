@@ -25,6 +25,19 @@ namespace SuperflightCoop
         public bool Visible { get { return body != null && body.activeSelf; } }
         public Vector3 Position { get { return pos; } }
 
+        /// <summary>How many of the puppet's renderers a camera drew last frame (0 when off screen or not yet built).</summary>
+        public int RenderedCount
+        {
+            get
+            {
+                if (body == null || !Root.activeSelf) return 0;
+                int n = 0;
+                foreach (var r in body.GetComponentsInChildren<Renderer>()) if (r.enabled && r.isVisible) n++;
+                return n;
+            }
+        }
+        public bool BodyIsClone { get { return bodyIsClone; } }
+
         Puppet(PlayerInfo info) { Info = info; }
 
         public static Puppet Create(PlayerInfo info)

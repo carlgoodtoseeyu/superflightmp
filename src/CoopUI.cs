@@ -37,7 +37,7 @@ namespace SuperflightCoop
         void Window(int id)
         {
             var s = m.Session;
-            if (name == null) name = m.ResolveName();
+            if (name == null || (s.Active && name != s.LocalName)) name = s.Active ? s.LocalName : m.ResolveName();
             GUILayout.BeginHorizontal();
             GUILayout.Label("Name", GUILayout.Width(50));
             name = GUILayout.TextField(name, 24);

@@ -127,15 +127,21 @@ def main():
         b0 = c.call("eval", {"expr": "statesApplied"})["value"]
         hp0, cp0 = pos(h), pos(c)
         hmax = cmax = 0.0
+        hrend = crend = 0
         end = time.time() + args.hold_s
         while time.time() < end:
             time.sleep(1)
             hmax = max(hmax, dist(hp0, pos(h)))
             cmax = max(cmax, dist(cp0, pos(c)))
+            hrend = max(hrend, int(h.call("eval", {"expr": "player.1.rendered"})["value"]))
+            crend = max(crend, int(c.call("eval", {"expr": "player.0.rendered"})["value"]))
         a1 = h.call("eval", {"expr": "statesApplied"})["value"]
         b1 = c.call("eval", {"expr": "statesApplied"})["value"]
         check("host player moved", hmax > 20, "max %.1f units from start in %ss" % (hmax, args.hold_s))
         check("client player moved", cmax > 20, "max %.1f units from start in %ss" % (cmax, args.hold_s))
+        check("host drew the client's wingsuit meshes", hrend > 0, "most renderers drawn in one frame: %d" % hrend)
+        check("client drew the host's wingsuit meshes", crend > 0, "most renderers drawn in one frame: %d" % crend)
+        check("puppets are mesh clones, not spheres", h.call("eval", {"expr": "clonedPuppets"})["value"] >= 1 and c.call("eval", {"expr": "clonedPuppets"})["value"] >= 1)
         shots = []
         for i, b in enumerate(bridges):
             path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "shot-%d.png" % i)

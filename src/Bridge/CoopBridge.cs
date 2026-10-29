@@ -106,6 +106,8 @@ namespace SuperflightCoop.Bridge
                 case "received": return s.Received;
                 case "sent": return s.Sent;
                 case "visiblePuppets": { int n = 0; foreach (var r in s.Remotes.Values) if (r.Puppet != null && r.Puppet.Visible) n++; return n; }
+                case "renderedPuppets": { int n = 0; foreach (var r in s.Remotes.Values) if (r.Puppet != null && r.Puppet.RenderedCount > 0) n++; return n; }
+                case "clonedPuppets": { int n = 0; foreach (var r in s.Remotes.Values) if (r.Puppet != null && r.Puppet.BodyIsClone) n++; return n; }
                 case "lastError": return s.LastError;
                 case "frames": return Time.frameCount;
             }
@@ -123,6 +125,7 @@ namespace SuperflightCoop.Bridge
                     case "score": return r.Last.Score;
                     case "name": return r.Info.Name;
                     case "visible": return r.Puppet != null && r.Puppet.Visible;
+                    case "rendered": return r.Puppet == null ? 0 : r.Puppet.RenderedCount;
                     case "ageMs": return (long)((Time.realtimeSinceStartup - r.LastSeen) * 1000);
                     case "pos": return Axis(r.Last.Position, axis);
                     case "puppet": return r.Puppet == null ? 0.0 : Axis(r.Puppet.Position, axis);
