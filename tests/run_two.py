@@ -1,4 +1,4 @@
-"""Two real Superflight copies on one PC: instance 0 hosts, instance 1 joins over UDP. Both enter flight.
+﻿"""Two real Superflight copies on one PC: instance 0 hosts, instance 1 joins over UDP. Both enter flight.
 Asserts through the in-game bridge that each side sees the other, both are in the host's world, state keeps
 arriving and the puppets are drawn. Prints RESULT: PASS or RESULT: FAIL and exits 0 or 1.
 
@@ -73,8 +73,8 @@ def main():
         return False, last
 
     try:
-        host_extra = ["--coop-host", str(args.port), "--coop-autoflight", "--coop-bot"]
-        client_extra = ["--coop-join", "127.0.0.1:%d" % args.port, "--coop-autoflight", "--coop-bot"]
+        host_extra = ["--coop-host", str(args.port), "--coop-autoflight", "--coop-bot-autochoose"]
+        client_extra = ["--coop-join", "127.0.0.1:%d" % args.port, "--coop-autoflight", "--coop-bot-autochoose"]
         p0, e0 = start(args.instances[0], 0, args, host_extra)
         procs.append(p0)
         time.sleep(3)

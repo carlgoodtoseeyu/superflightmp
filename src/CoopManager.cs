@@ -66,6 +66,7 @@ namespace SuperflightCoop
             else if (!string.IsNullOrEmpty(Plugin.CliJoin)) JoinUdp(Plugin.CliJoin);
             if (Plugin.CliAutoFlight) Game.StartFlight();
             if (Plugin.CliBot) Bot.Enabled = true;
+            if (Plugin.CliBotAutoChoose) Bot.AutoChoose = true;
         }
 
         public string ResolveName()

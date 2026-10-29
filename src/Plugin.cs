@@ -32,6 +32,7 @@ namespace SuperflightCoop
         public static string CliEndpointFile;
         public static bool CliAutoFlight;
         public static bool CliBot;
+        public static bool CliBotAutoChoose;
 
         void Awake()
         {
@@ -82,6 +83,7 @@ namespace SuperflightCoop
                     case "--coop-endpoint-file": CliEndpointFile = next; i++; break;
                     case "--coop-autoflight": CliAutoFlight = true; break;
                     case "--coop-bot": CliBot = true; break;
+                    case "--coop-bot-autochoose": CliBot = true; CliBotAutoChoose = true; break;
                 }
             }
         }

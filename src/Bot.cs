@@ -9,6 +9,8 @@ namespace SuperflightCoop
     public static class Bot
     {
         public static bool Enabled;
+        public static bool AutoChoose;   // tests that do not drive the choice screen: respawn 2 s after it opens
+        static float choiceSince = -1f;
         static readonly FieldInfo Horizontal = AccessTools.Field(typeof(PlayerMovement), "horizontalInput");
         static readonly FieldInfo Vertical = AccessTools.Field(typeof(PlayerMovement), "verticalInput");
         static readonly MethodInfo QuickReset = AccessTools.Method(typeof(LocalGameManager), "QuickReset", System.Type.EmptyTypes);
@@ -27,7 +29,14 @@ namespace SuperflightCoop
             if (!Enabled) return;
             var lgm = LocalGameManager.Singleton;
             if (lgm == null) return;
-            if (LevelChoice.Open) { deadSince = -1f; return; }
+            if (LevelChoice.Open)
+            {
+                deadSince = -1f;
+                if (choiceSince < 0) choiceSince = Time.realtimeSinceStartup;
+                else if (AutoChoose && Time.realtimeSinceStartup - choiceSince > 2f) { choiceSince = -1f; LevelChoice.Choose(LevelChoice.PendingSeed != 0); }
+                return;
+            }
+            choiceSince = -1f;
             if (lgm.playerState == LocalGameManager.PlayerState.Dead)
             {
                 if (deadSince < 0) deadSince = Time.realtimeSinceStartup;
