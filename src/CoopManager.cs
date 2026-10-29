@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using SuperflightCoop.Bridge;
@@ -40,11 +40,13 @@ namespace SuperflightCoop
 
         void Update()
         {
+            if (!Application.runInBackground) Application.runInBackground = true;
             Bridge.Pump();
             try { Session.Update(); }
             catch (Exception e) { Plugin.Log.LogError("session: " + e); }
             if (!cliDone && LocalGameManager.Singleton != null && Time.realtimeSinceStartup - started > 1f) RunCommandLine();
             Ui.Update();
+            Bot.Update();
         }
 
         void OnGUI() { Ui.Draw(); }
@@ -62,6 +64,7 @@ namespace SuperflightCoop
             if (Plugin.CliHostPort > 0) HostUdp(Plugin.CliHostPort);
             else if (!string.IsNullOrEmpty(Plugin.CliJoin)) JoinUdp(Plugin.CliJoin);
             if (Plugin.CliAutoFlight) Game.StartFlight();
+            if (Plugin.CliBot) Bot.Enabled = true;
         }
 
         public string ResolveName()

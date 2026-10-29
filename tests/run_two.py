@@ -73,8 +73,8 @@ def main():
         return False, last
 
     try:
-        host_extra = ["--coop-host", str(args.port), "--coop-autoflight"]
-        client_extra = ["--coop-join", "127.0.0.1:%d" % args.port, "--coop-autoflight"]
+        host_extra = ["--coop-host", str(args.port), "--coop-autoflight", "--coop-bot"]
+        client_extra = ["--coop-join", "127.0.0.1:%d" % args.port, "--coop-autoflight", "--coop-bot"]
         p0, e0 = start(args.instances[0], 0, args, host_extra)
         procs.append(p0)
         time.sleep(3)
@@ -116,12 +116,36 @@ def main():
         ok, _ = poll(h, "visiblePuppets", ">=", 1, 30, "host draws the client's puppet")
         ok, _ = poll(c, "visiblePuppets", ">=", 1, 30, "client draws the host's puppet")
 
-        # state must keep flowing while both fly
+        # state must keep flowing while both fly, and both must actually move (the bots steer and quick-reset)
+        def pos(b):
+            return tuple(float(b.call("eval", {"expr": "local.pos." + ax})["value"]) for ax in "xyz")
+
+        def dist(p, q):
+            return sum((x - y) ** 2 for x, y in zip(p, q)) ** 0.5
+
         a0 = h.call("eval", {"expr": "statesApplied"})["value"]
         b0 = c.call("eval", {"expr": "statesApplied"})["value"]
-        time.sleep(args.hold_s)
+        hp0, cp0 = pos(h), pos(c)
+        hmax = cmax = 0.0
+        end = time.time() + args.hold_s
+        while time.time() < end:
+            time.sleep(1)
+            hmax = max(hmax, dist(hp0, pos(h)))
+            cmax = max(cmax, dist(cp0, pos(c)))
         a1 = h.call("eval", {"expr": "statesApplied"})["value"]
         b1 = c.call("eval", {"expr": "statesApplied"})["value"]
+        check("host player moved", hmax > 20, "max %.1f units from start in %ss" % (hmax, args.hold_s))
+        check("client player moved", cmax > 20, "max %.1f units from start in %ss" % (cmax, args.hold_s))
+        shots = []
+        for i, b in enumerate(bridges):
+            path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "shot-%d.png" % i)
+            if os.path.exists(path):
+                os.remove(path)
+            b.call("screenshot", {"path": path})
+            shots.append(path)
+        time.sleep(2)
+        for i, path in enumerate(shots):
+            check("screenshot %d written" % i, os.path.exists(path) and os.path.getsize(path) > 1000, path)
         rate = args.hold_s * 5  # expect at least 5 updates/s of the configured 20
         check("host keeps receiving client state", a1 - a0 >= rate, "%d updates in %ss" % (a1 - a0, args.hold_s))
         check("client keeps receiving host state", b1 - b0 >= rate, "%d updates in %ss" % (b1 - b0, args.hold_s))

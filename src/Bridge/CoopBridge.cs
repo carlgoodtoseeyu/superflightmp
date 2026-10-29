@@ -18,6 +18,7 @@ namespace SuperflightCoop.Bridge
             s.Register("eval", Eval, true);
             s.Register("waitFor", WaitFor, true);
             s.Register("coop.status", p => m.State(), true);
+            s.Register("screenshot", Screenshot, true);
         }
 
         object State(Dictionary<string, object> p)
@@ -61,10 +62,21 @@ namespace SuperflightCoop.Bridge
                     Game.LoadSeed(int.Parse(parts[1], CultureInfo.InvariantCulture)); output = "seed " + Game.CurrentSeed();
                     break;
                 case "name": m.Session.LocalName = cmd.Substring(4).Trim(); break;
+                case "bot": Bot.Enabled = parts.Length < 2 || parts[1] != "off"; output = "bot " + (Bot.Enabled ? "on" : "off"); break;
                 case "quit": Application.Quit(); break;
                 default: ok = false; output = "unknown command " + parts[0]; break;
             }
             var r = new Dictionary<string, object>(); r["ok"] = ok; r["output"] = output;
+            return r;
+        }
+
+        static int shots;
+        object Screenshot(Dictionary<string, object> p)
+        {
+            string path = Json.Str(p, "path", null);
+            if (path == null) path = System.IO.Path.GetFullPath("coop-shot-" + (++shots) + ".png");
+            ScreenCapture.CaptureScreenshot(path);
+            var r = new Dictionary<string, object>(); r["ok"] = true; r["path"] = path;
             return r;
         }
 

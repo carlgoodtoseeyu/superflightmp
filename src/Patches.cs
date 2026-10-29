@@ -55,6 +55,16 @@ namespace SuperflightCoop
             }
         }
 
+        /// <summary>Test bot: after the game read the keyboard, overwrite the axes with the bot's steering.</summary>
+        [HarmonyPatch(typeof(PlayerMovement), "GetInput")]
+        static class BotInput
+        {
+            static void Postfix(PlayerMovement __instance)
+            {
+                if (Bot.Enabled) Bot.Steer(__instance);
+            }
+        }
+
         [HarmonyPatch(typeof(LocalGameManager), "OnPlayerDeath")]
         static class Death
         {

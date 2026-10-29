@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
@@ -24,13 +24,14 @@ namespace SuperflightCoop
         public static ConfigEntry<float> SendRate;
 
         // command line, for automated tests: --coop-host PORT, --coop-join HOST:PORT, --coop-name NAME,
-        // --coop-bridge PORT, --coop-endpoint-file PATH, --coop-autoflight
+        // --coop-bridge PORT, --coop-endpoint-file PATH, --coop-autoflight, --coop-bot
         public static int CliHostPort = -1;
         public static string CliJoin;
         public static string CliName;
         public static int CliBridgePort = -1;
         public static string CliEndpointFile;
         public static bool CliAutoFlight;
+        public static bool CliBot;
 
         void Awake()
         {
@@ -55,6 +56,7 @@ namespace SuperflightCoop
                 Log.LogError("patching failed: " + e);
             }
 
+            Application.runInBackground = true; // a Unity player pauses without focus; two copies on one PC need this
             var go = new GameObject("SuperflightCoop");
             DontDestroyOnLoad(go);
             go.hideFlags = HideFlags.HideAndDontSave;
@@ -76,6 +78,7 @@ namespace SuperflightCoop
                     case "--coop-bridge": if (next != null) int.TryParse(next, out CliBridgePort); i++; break;
                     case "--coop-endpoint-file": CliEndpointFile = next; i++; break;
                     case "--coop-autoflight": CliAutoFlight = true; break;
+                    case "--coop-bot": CliBot = true; break;
                 }
             }
         }

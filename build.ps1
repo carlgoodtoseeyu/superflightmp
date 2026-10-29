@@ -1,4 +1,4 @@
-# Builds SuperflightCoop.dll against the game's own .NET 3.5 (Mono 2.0) assemblies and BepInEx 5, with the
+﻿# Builds SuperflightCoop.dll against the game's own .NET 3.5 (Mono 2.0) assemblies and BepInEx 5, with the
 # Roslyn csc from Visual Studio Build Tools. No NuGet, no SDK project: the game folder is the reference set.
 #
 #   .\build.ps1 -GameDir <folder with superflight.exe and BepInEx\> [-Deploy <folder>[,<folder>]]
@@ -18,7 +18,7 @@ foreach ($p in $Csc, $managed, $core) { if (-not (Test-Path $p)) { throw "missin
 $refs = @(
     "$managed\mscorlib.dll", "$managed\System.dll", "$managed\System.Core.dll",
     "$managed\UnityEngine.dll", "$managed\UnityEngine.CoreModule.dll", "$managed\UnityEngine.PhysicsModule.dll",
-    "$managed\UnityEngine.IMGUIModule.dll", "$managed\UnityEngine.InputModule.dll", "$managed\UnityEngine.TextRenderingModule.dll",
+    "$managed\UnityEngine.IMGUIModule.dll", "$managed\UnityEngine.ParticleSystemModule.dll", "$managed\UnityEngine.ScreenCaptureModule.dll", "$managed\UnityEngine.InputModule.dll", "$managed\UnityEngine.TextRenderingModule.dll",
     "$managed\Assembly-CSharp.dll", "$managed\Assembly-CSharp-firstpass.dll",
     "$core\BepInEx.dll", "$core\0Harmony.dll"
 )

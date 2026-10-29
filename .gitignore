@@ -2,3 +2,5 @@ bin/
 obj/
 *.user
 /local/
+tests/shot-*.png
+tests/last-run.json
