@@ -10,6 +10,7 @@ param(
     [string]$Csc = 'C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin\Roslyn\csc.exe'
 )
 $ErrorActionPreference = 'Stop'
+if (-not $GameDir) { throw "pass -GameDir <folder with superflight.exe and BepInEx> or set SUPERFLIGHT_GAMEDIR" }
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $managed = Join-Path $GameDir 'superflight_Data\Managed'
 $core = Join-Path $GameDir 'BepInEx\core'
