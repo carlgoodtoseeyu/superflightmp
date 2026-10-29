@@ -46,10 +46,11 @@ namespace SuperflightCoop
             catch (Exception e) { Plugin.Log.LogError("session: " + e); }
             if (!cliDone && LocalGameManager.Singleton != null && Time.realtimeSinceStartup - started > 1f) RunCommandLine();
             Ui.Update();
+            LevelChoice.Update();
             Bot.Update();
         }
 
-        void OnGUI() { Ui.Draw(); }
+        void OnGUI() { Ui.Draw(); LevelChoice.Draw(); }
 
         void OnApplicationQuit()
         {
@@ -133,6 +134,10 @@ namespace SuperflightCoop
             d["inFlight"] = Game.InFlight();
             d["playerState"] = Game.PlayerStateName();
             d["lastError"] = Session.LastError;
+            d["pendingSeed"] = LevelChoice.PendingSeed;
+            d["choiceOpen"] = LevelChoice.Open;
+            d["choiceReason"] = LevelChoice.Why.ToString();
+            d["timeScale"] = (double)Time.timeScale;
             PlayerState local;
             if (Game.ReadLocalState(Session.LocalId, out local))
             {
@@ -147,6 +152,8 @@ namespace SuperflightCoop
                 p["puppetPos"] = r.Puppet == null ? null : Vec(r.Puppet.Position);
                 p["visible"] = r.Puppet != null && r.Puppet.Visible;
                 p["score"] = r.Last.Score;
+                p["seed"] = r.Last.Seed;
+                p["flags"] = (int)r.Last.Flags;
                 p["ageMs"] = (long)((Time.realtimeSinceStartup - r.LastSeen) * 1000);
                 players.Add(p);
             }

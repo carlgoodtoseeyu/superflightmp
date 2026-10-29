@@ -63,6 +63,12 @@ namespace SuperflightCoop.Bridge
                     break;
                 case "name": m.Session.LocalName = cmd.Substring(4).Trim(); break;
                 case "bot": Bot.Enabled = parts.Length < 2 || parts[1] != "off"; output = "bot " + (Bot.Enabled ? "on" : "off"); break;
+                case "portal": { var l = LocalGameManager.Singleton; if (l != null && Game.InFlight()) l.OnPortalEnter(); else { ok = false; output = "not in flight"; } break; }
+                case "endplane": { var l = LocalGameManager.Singleton; if (l != null && Game.InFlight()) l.OnEndPlaneEnter(); else { ok = false; output = "not in flight"; } break; }
+                case "die": { var pm = PlayerMovement.Singleton; if (pm != null && LocalGameManager.Singleton.playerState == LocalGameManager.PlayerState.Flying) pm.Die(); else { ok = false; output = "not flying"; } break; }
+                case "choose":
+                    if (!LevelChoice.Open) { ok = false; output = "no choice open"; break; }
+                    LevelChoice.Choose(parts.Length > 1 && parts[1] == "proceed"); break;
                 case "quit": Application.Quit(); break;
                 default: ok = false; output = "unknown command " + parts[0]; break;
             }
@@ -109,6 +115,12 @@ namespace SuperflightCoop.Bridge
                 case "renderedPuppets": { int n = 0; foreach (var r in s.Remotes.Values) if (r.Puppet != null && r.Puppet.RenderedCount > 0) n++; return n; }
                 case "clonedPuppets": { int n = 0; foreach (var r in s.Remotes.Values) if (r.Puppet != null && r.Puppet.BodyIsClone) n++; return n; }
                 case "lastError": return s.LastError;
+                case "pendingSeed": return LevelChoice.PendingSeed;
+                case "choiceOpen": return LevelChoice.Open;
+                case "choiceReason": return LevelChoice.Why.ToString();
+                case "timeScale": return (double)Time.timeScale;
+                case "scoreboardRows": return LevelChoice.Rows().Count;
+                case "levelCode": return Game.LevelCode(Game.CurrentSeed());
                 case "frames": return Time.frameCount;
             }
             if (expr.StartsWith("player."))

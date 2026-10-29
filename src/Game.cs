@@ -39,6 +39,8 @@ namespace SuperflightCoop
             s.Score = lgm.ScoreThisRun;
             s.Combo = lgm.ScoreThisCombo;
             if (lgm.playerState == LocalGameManager.PlayerState.Dead) s.Flags |= 2;
+            if (LevelChoice.Open) s.Flags |= 4;
+            s.Seed = CurrentSeed();
             return true;
         }
 
@@ -55,6 +57,60 @@ namespace SuperflightCoop
                 WorldManager.currentWorld = world;
                 AccessTools.Method(typeof(LocalGameManager), "LoadCurrentWorld", Type.EmptyTypes).Invoke(lgm, null);
             }
+        }
+
+        static readonly System.Reflection.MethodInfo QuickResetMethod = AccessTools.Method(typeof(LocalGameManager), "QuickReset", Type.EmptyTypes);
+        static readonly System.Reflection.MethodInfo LoadCurrentWorldMethod = AccessTools.Method(typeof(LocalGameManager), "LoadCurrentWorld", Type.EmptyTypes);
+        static readonly System.Reflection.FieldInfo AlphaSeedField = AccessTools.Field(typeof(World), "alphanumericSeed");
+        public static bool AllowReset;   // set while the plugin itself calls QuickReset (the patch blocks the game's own calls during a choice)
+
+        /// <summary>A fresh run at the spawn of the current level (the game's QuickReset).</summary>
+        public static void Respawn()
+        {
+            var lgm = LocalGameManager.Singleton;
+            if (lgm == null || QuickResetMethod == null) return;
+            AllowReset = true;
+            try { QuickResetMethod.Invoke(lgm, null); } finally { AllowReset = false; }
+        }
+
+        /// <summary>Rebuild the current level and put the player at its spawn, without changing the seed.</summary>
+        public static void RegenerateCurrent()
+        {
+            var lgm = LocalGameManager.Singleton;
+            if (lgm == null) return;
+            var w = WorldManager.currentWorld ?? new World(CurrentSeed());
+            if (InFlight()) lgm.OnSeedEnter(w);
+            else { WorldManager.currentWorld = w; if (LoadCurrentWorldMethod != null) LoadCurrentWorldMethod.Invoke(lgm, null); }
+        }
+
+        /// <summary>Host: run the game's own portal code (new world, reset), bypassing the choice-screen patch.</summary>
+        public static void PortalProceed()
+        {
+            var lgm = LocalGameManager.Singleton;
+            if (lgm == null) return;
+            LevelChoice.PassThrough = true;
+            try { lgm.OnPortalEnter(); } finally { LevelChoice.PassThrough = false; }
+        }
+
+        /// <summary>Client after a crash: switch the level and start a fresh run there.</summary>
+        public static void LoadSeedAfterCrash(int seed)
+        {
+            var lgm = LocalGameManager.Singleton;
+            if (lgm == null) return;
+            WorldManager.currentWorld = new World(seed);
+            if (LoadCurrentWorldMethod != null) LoadCurrentWorldMethod.Invoke(lgm, null);
+            Respawn();
+        }
+
+        public static string LevelCode(int seed)
+        {
+            try
+            {
+                var w = WorldManager.currentWorld != null && WorldManager.currentWorld.seed == seed ? WorldManager.currentWorld : new World(seed);
+                var code = AlphaSeedField == null ? null : AlphaSeedField.GetValue(w) as string;
+                return string.IsNullOrEmpty(code) ? seed.ToString(System.Globalization.CultureInfo.InvariantCulture) : code;
+            }
+            catch { return seed.ToString(System.Globalization.CultureInfo.InvariantCulture); }
         }
 
         public static void StartFlight()

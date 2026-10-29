@@ -80,6 +80,8 @@ namespace SuperflightCoop
             Remotes.Clear();
             peerToId.Clear();
             Transport = null;
+            LevelChoice.PendingSeed = 0;
+            if (LevelChoice.Open) LevelChoice.Close();
             if (CurrentRole != Role.None) CoopManager.Instance.Bridge.PushEvent("coop.left", null);
             CurrentRole = Role.None;
             LocalId = -1;
@@ -255,6 +257,7 @@ namespace SuperflightCoop
                     int n = r.ReadUInt16();
                     for (int i = 0; i < n; i++) AddRemote(Protocol.ReadInfo(r));
                     Joined = true;
+                    LevelChoice.PendingSeed = 0;
                     LastError = "";
                     Plugin.Log.LogInfo("joined as id " + LocalId + ", " + n + " other players, seed " + seed);
                     ApplySeed(seed);
@@ -280,8 +283,14 @@ namespace SuperflightCoop
                     break;
                 }
                 case Msg.Seed:
-                    ApplySeed(r.ReadInt32());
+                {
+                    int seed = r.ReadInt32();
+                    Seed = seed;
+                    if (Game.CurrentSeed() != seed) { LevelChoice.PendingSeed = seed; Plugin.Log.LogInfo("host moved on to " + seed + ", pending"); }
+                    else LevelChoice.PendingSeed = 0;
+                    CoopManager.Instance.Bridge.PushEvent("coop.seed", seed);
                     break;
+                }
                 case Msg.Bye:
                     LastError = "host closed the session";
                     Leave();

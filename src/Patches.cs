@@ -41,6 +41,27 @@ namespace SuperflightCoop
             }
         }
 
+        /// <summary>Portal: the choice screen instead of the game's immediate next level (host and client).</summary>
+        [HarmonyPatch(typeof(LocalGameManager), "OnPortalEnter")]
+        static class PortalChoice
+        {
+            static bool Prefix() { return !LevelChoice.Intercept(LevelChoice.Reason.Portal); }
+        }
+
+        /// <summary>Falling out of the level also generates a new world in the game: same choice.</summary>
+        [HarmonyPatch(typeof(LocalGameManager), "OnEndPlaneEnter")]
+        static class FellChoice
+        {
+            static bool Prefix() { return !LevelChoice.Intercept(LevelChoice.Reason.Fell); }
+        }
+
+        /// <summary>While the choice screen is up, the game's own reset must not respawn behind our back.</summary>
+        [HarmonyPatch(typeof(LocalGameManager), "QuickReset")]
+        static class ResetDuringChoice
+        {
+            static bool Prefix() { return !LevelChoice.Open || Game.AllowReset; }
+        }
+
         /// <summary>Client: a portal or "new world" never leaves the host's world. The game asks WorldManager for a new
         /// one; while joined it gets the host's seed back, so the level regenerates in place.</summary>
         [HarmonyPatch(typeof(WorldManager), "NewWorld")]
@@ -50,7 +71,7 @@ namespace SuperflightCoop
             {
                 var s = S;
                 if (s == null || s.CurrentRole != Session.Role.Client || !s.Joined) return true;
-                __result = new World(s.Seed);
+                __result = new World(LevelChoice.PendingSeed != 0 ? LevelChoice.PendingSeed : s.Seed);
                 return false;
             }
         }
@@ -71,6 +92,7 @@ namespace SuperflightCoop
             static void Postfix()
             {
                 if (CoopManager.Instance != null) CoopManager.Instance.Bridge.PushEvent("game.death", null);
+                LevelChoice.Intercept(LevelChoice.Reason.Crash);
             }
         }
     }

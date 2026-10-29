@@ -27,13 +27,14 @@ namespace SuperflightCoop
             if (!Enabled) return;
             var lgm = LocalGameManager.Singleton;
             if (lgm == null) return;
+            if (LevelChoice.Open) { deadSince = -1f; return; }
             if (lgm.playerState == LocalGameManager.PlayerState.Dead)
             {
                 if (deadSince < 0) deadSince = Time.realtimeSinceStartup;
                 else if (Time.realtimeSinceStartup - deadSince > 1f)
                 {
                     deadSince = -1f;
-                    try { if (QuickReset != null) QuickReset.Invoke(lgm, null); } catch (System.Exception e) { Plugin.Log.LogDebug("bot reset: " + e.Message); }
+                    Game.Respawn();
                 }
             }
             else deadSince = -1f;

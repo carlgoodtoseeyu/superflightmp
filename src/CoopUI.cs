@@ -69,6 +69,8 @@ namespace SuperflightCoop
                 GUILayout.Label("Players: you (" + s.LocalName + ")");
                 foreach (var r in s.Remotes.Values)
                     GUILayout.Label("  " + r.Info.Name + "  " + r.Last.Score + (r.Puppet != null && r.Puppet.Visible ? "" : "  (not flying)"));
+                if (s.CurrentRole == Session.Role.Client && LevelChoice.PendingSeed != 0)
+                    GUILayout.Label("Host moved on to level " + Game.LevelCode(LevelChoice.PendingSeed) + ": your next portal or crash offers to follow.");
                 if (GUILayout.Button("Leave")) m.Leave();
             }
             if (!string.IsNullOrEmpty(s.LastError)) GUILayout.Label(s.LastError);

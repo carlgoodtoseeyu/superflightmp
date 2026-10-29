@@ -3,4 +3,4 @@ obj/
 *.user
 /local/
 tests/shot-*.png
-tests/last-run.json
+tests/last-*.json

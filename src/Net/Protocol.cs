@@ -33,14 +33,15 @@ namespace SuperflightCoop.Net
         public Quaternion Rotation;
         public int Score;
         public int Combo;
-        public byte Flags;    // bit 0: in flight, bit 1: dead
+        public byte Flags;    // bit 0: in flight, bit 1: dead, bit 2: in the level choice
+        public int Seed;      // the world this player is in
         public float Time;    // sender's clock, for interpolation
     }
 
     /// <summary>Binary encoding. Little endian, strings as UTF-8 with a 2-byte length.</summary>
     public static class Protocol
     {
-        public const int Version = 1;
+        public const int Version = 2;
 
         public static byte[] Hello(string name, float hue)
         {
@@ -76,6 +77,7 @@ namespace SuperflightCoop.Net
             w.Write(s.Score); w.Write(s.Combo);
             w.Write(s.Flags);
             w.Write(s.Time);
+            w.Write(s.Seed);
             return End(w);
         }
 
@@ -88,6 +90,7 @@ namespace SuperflightCoop.Net
             s.Score = r.ReadInt32(); s.Combo = r.ReadInt32();
             s.Flags = r.ReadByte();
             s.Time = r.ReadSingle();
+            s.Seed = r.ReadInt32();
             return s;
         }
 

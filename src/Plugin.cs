@@ -48,8 +48,11 @@ namespace SuperflightCoop
             try
             {
                 var harmony = new Harmony(Id);
-                harmony.PatchAll(typeof(Patches));
-                Log.LogInfo("patches applied");
+                harmony.PatchAll(typeof(Plugin).Assembly); // PatchAll(Type) skips nested patch classes
+                int n = 0;
+                foreach (var m in harmony.GetPatchedMethods()) { n++; Log.LogDebug("patched " + m.DeclaringType.Name + "." + m.Name); }
+                Log.LogInfo("patches applied: " + n + " methods");
+                if (n == 0) Log.LogError("no method was patched; the co-op hooks are not live");
             }
             catch (Exception e)
             {
