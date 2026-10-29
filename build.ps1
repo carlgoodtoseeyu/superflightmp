@@ -31,7 +31,8 @@ $version = (& cmd /c "git -C ""$root"" rev-parse --short HEAD 2>nul"); if (-not 
 $verFile = Join-Path $out 'BuildInfo.cs'
 "namespace SuperflightCoop { internal static class BuildInfo { public const string Commit = ""$version""; } }" | Set-Content $verFile -Encoding ascii
 
-$args = @('/nologo', '/noconfig', '/nostdlib+', '/target:library', '/optimize+', '/debug:portable', '/langversion:7.3',
+# /pathmap keeps the machine's folder layout out of the DLL and PDB (the PE debug directory stores the PDB path)
+$args = @('/nologo', '/noconfig', '/nostdlib+', '/target:library', '/optimize+', '/debug:portable', '/langversion:7.3', "/pathmap:$root=.",
           '/nowarn:1701,1702', "/out:$dll") + ($refs | ForEach-Object { "/r:$_" }) + $sources + $verFile
 & $Csc @args
 if ($LASTEXITCODE -ne 0) { throw "csc failed ($LASTEXITCODE)" }
