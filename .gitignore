@@ -4,3 +4,4 @@ obj/
 /local/
 tests/shot-*.png
 tests/last-*.json
+tests/last-*.log

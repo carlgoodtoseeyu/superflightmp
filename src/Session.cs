@@ -34,6 +34,9 @@ namespace SuperflightCoop
         int nextId = 1;
         float lastStateSend;
         float connectStarted;
+        float lastHello;
+        /// <summary>Raised when an active session ends, for whatever reason (Leave, refused, host lost).</summary>
+        public Action Ended;
 
         // counters for the bridge
         public long Sent, Received, StatesApplied, Relayed;
@@ -60,9 +63,15 @@ namespace SuperflightCoop
             CurrentRole = Role.Client;
             Joined = false;
             connectStarted = Time.realtimeSinceStartup;
+            SendHello();
+            Plugin.Log.LogInfo("joining as '" + LocalName + "'");
+        }
+
+        void SendHello()
+        {
+            lastHello = Time.realtimeSinceStartup;
             Transport.Send("host", Protocol.Hello(LocalName, LocalHue), true);
             Sent++;
-            Plugin.Log.LogInfo("joining as '" + LocalName + "'");
         }
 
         public void Leave()
@@ -82,11 +91,23 @@ namespace SuperflightCoop
             Transport = null;
             LevelChoice.PendingSeed = 0;
             if (LevelChoice.Open) LevelChoice.Close();
-            if (CurrentRole != Role.None) CoopManager.Instance.Bridge.PushEvent("coop.left", null);
+            bool wasActive = CurrentRole != Role.None;
             CurrentRole = Role.None;
             LocalId = -1;
             Joined = false;
             nextId = 1;
+            if (wasActive)
+            {
+                CoopManager.Instance.Bridge.PushEvent("coop.left", null);
+                if (Ended != null) Ended();
+            }
+        }
+
+        /// <summary>Host: a transport peer is known to be gone (for example it left the Steam lobby).</summary>
+        public void DropPeer(string peer, string why)
+        {
+            int id;
+            if (CurrentRole == Role.Host && peerToId.TryGetValue(peer, out id)) RemoveRemote(id, why);
         }
 
         public void Update()
@@ -94,12 +115,17 @@ namespace SuperflightCoop
             if (Transport == null) return;
             Transport.Poll(OnMessage, OnPeerLost);
 
-            if (CurrentRole == Role.Client && !Joined && Time.realtimeSinceStartup - connectStarted > UdpTransport.TimeoutSeconds)
+            if (CurrentRole == Role.Client && !Joined)
             {
-                LastError = "no answer from host";
-                Plugin.Log.LogWarning(LastError);
-                Leave();
-                return;
+                if (Time.realtimeSinceStartup - connectStarted > Transport.ConnectTimeout)
+                {
+                    LastError = "no answer from host";
+                    Plugin.Log.LogWarning(LastError);
+                    Leave();
+                    return;
+                }
+                // the first Hello can be lost while a Steam session is still being set up; the host answers duplicates
+                if (Time.realtimeSinceStartup - lastHello > 2f) SendHello();
             }
 
             float interval = 1f / Mathf.Max(1f, Plugin.SendRate.Value);

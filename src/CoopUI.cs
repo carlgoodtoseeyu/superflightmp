@@ -8,9 +8,10 @@ namespace SuperflightCoop
     {
         readonly CoopManager m;
         bool show;
-        Rect rect = new Rect(10, 10, 360, 230);
+        Rect rect = new Rect(10, 10, 400, 260);
         string port;
         string join = "127.0.0.1:4444";
+        string lobby = "";
         string name;
         GUIStyle tag, tagShadow;
 
@@ -59,13 +60,38 @@ namespace SuperflightCoop
                 join = GUILayout.TextField(join, 64);
                 if (GUILayout.Button("Join", GUILayout.Width(60))) { s.LocalName = name; m.JoinUdp(join); }
                 GUILayout.EndHorizontal();
-                GUILayout.Label("Steam friends: coming next (lobby + invite).");
+                GUILayout.Space(6);
+                if (SteamLobby.Ready)
+                {
+                    if (SteamLobby.Busy) GUILayout.Label(SteamLobby.Status);
+                    else if (GUILayout.Button("Host for Steam friends (no port forwarding)")) { s.LocalName = name; m.HostSteam(); }
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Label("Lobby", GUILayout.Width(50));
+                    lobby = GUILayout.TextField(lobby, 20);
+                    if (GUILayout.Button("Join", GUILayout.Width(60)))
+                    {
+                        ulong code; if (ulong.TryParse(lobby.Trim(), out code)) { s.LocalName = name; m.JoinSteam(code); }
+                        else s.LastError = "paste the lobby code the host sees in this window";
+                    }
+                    GUILayout.EndHorizontal();
+                    GUILayout.Label("Friends normally join from your Steam invite; the lobby code is the fallback.");
+                }
+                else GUILayout.Label("Steam is not running: direct IP only.");
             }
             else
             {
-                string status = s.CurrentRole == Session.Role.Host ? "Hosting on UDP port " + port
-                    : s.Joined ? "Joined as player " + s.LocalId : "Connecting...";
+                bool steam = m.TransportName == "steam";
+                string status = s.CurrentRole == Session.Role.Host ? (steam ? "Hosting for Steam friends" : "Hosting on UDP port " + port)
+                    : s.Joined ? "Joined as player " + s.LocalId : (steam ? SteamLobby.Status : "Connecting...");
                 GUILayout.Label(status + "   world " + s.Seed);
+                if (steam && SteamLobby.InLobby)
+                {
+                    GUILayout.BeginHorizontal();
+                    if (GUILayout.Button("Invite friends (Steam overlay)")) m.Invite();
+                    GUILayout.Label("code", GUILayout.Width(36));
+                    GUILayout.TextField(SteamLobby.LobbyCode, 20, GUILayout.Width(150));
+                    GUILayout.EndHorizontal();
+                }
                 GUILayout.Label("Players: you (" + s.LocalName + ")");
                 foreach (var r in s.Remotes.Values)
                     GUILayout.Label("  " + r.Info.Name + "  " + r.Last.Score + (r.Puppet != null && r.Puppet.Visible ? "" : "  (not flying)"));

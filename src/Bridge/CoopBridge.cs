@@ -55,6 +55,15 @@ namespace SuperflightCoop.Bridge
                     ok = m.JoinUdp(parts[1]); if (!ok) output = m.Session.LastError;
                     break;
                 case "leave": m.Leave(); break;
+                case "steamhost": ok = m.HostSteam(); if (!ok) output = m.Session.LastError; break;
+                case "steamjoin":
+                {
+                    ulong lobby = 0;
+                    if (parts.Length < 2 || !ulong.TryParse(parts[1], out lobby)) { ok = false; output = "steamjoin needs a lobby id"; break; }
+                    ok = m.JoinSteam(lobby); if (!ok) output = m.Session.LastError;
+                    break;
+                }
+                case "invite": ok = m.Invite(); if (!ok) output = "not in a Steam lobby"; break;
                 case "flight": Game.StartFlight(); output = Game.InFlight() ? "in flight" : "requested"; break;
                 case "menu": { var l = LocalGameManager.Singleton; if (l != null) l.LoadMenu(); break; }
                 case "seed":
@@ -122,6 +131,13 @@ namespace SuperflightCoop.Bridge
                 case "scoreboardRows": return LevelChoice.Rows().Count;
                 case "levelCode": return Game.LevelCode(Game.CurrentSeed());
                 case "frames": return Time.frameCount;
+                case "transport": return m.TransportName;
+                case "steamReady": return SteamLobby.Ready;
+                case "lobbyId": return SteamLobby.LobbyCode;
+                case "inLobby": return SteamLobby.InLobby;
+                case "lobbyMembers": return SteamLobby.MemberCount;
+                case "lobbyBusy": return SteamLobby.Busy;
+                case "steamStatus": return SteamLobby.Status;
             }
             if (expr.StartsWith("player."))
             {

@@ -36,12 +36,16 @@ namespace SuperflightCoop
                 catch (Exception e) { Plugin.Log.LogError("bridge: " + e.Message); }
             }
             Ui = new CoopUI(this);
+            Session.Ended = SteamLobby.Leave;
+            if (Plugin.CliConnectLobby != 0) SteamLobby.RequestedLobby = Plugin.CliConnectLobby;
         }
 
         void Update()
         {
             if (!Application.runInBackground) Application.runInBackground = true;
             Bridge.Pump();
+            try { SteamLobby.Update(); }
+            catch (Exception e) { Plugin.Log.LogError("steam lobby: " + e); }
             try { Session.Update(); }
             catch (Exception e) { Plugin.Log.LogError("session: " + e); }
             if (!cliDone && LocalGameManager.Singleton != null && Time.realtimeSinceStartup - started > 1f) RunCommandLine();
@@ -64,6 +68,8 @@ namespace SuperflightCoop
             if (!string.IsNullOrEmpty(Plugin.CliName)) Session.LocalName = Plugin.CliName;
             if (Plugin.CliHostPort > 0) HostUdp(Plugin.CliHostPort);
             else if (!string.IsNullOrEmpty(Plugin.CliJoin)) JoinUdp(Plugin.CliJoin);
+            else if (Plugin.CliSteamHost) HostSteam();
+            else if (Plugin.CliSteamJoin != 0) JoinSteam(Plugin.CliSteamJoin);
             if (Plugin.CliAutoFlight) Game.StartFlight();
             if (Plugin.CliBot) Bot.Enabled = true;
             if (Plugin.CliBotAutoChoose) Bot.AutoChoose = true;
@@ -120,7 +126,50 @@ namespace SuperflightCoop
             }
         }
 
-        public void Leave() { Session.Leave(); }
+        /// <summary>Create a friends-only Steam lobby; the session starts when Steam answers (OnLobbyHosted).</summary>
+        public bool HostSteam()
+        {
+            Prepare();
+            Session.Leave();
+            SteamLobby.Leave();
+            if (SteamLobby.Host()) return true;
+            Session.LastError = "host failed: " + SteamLobby.Status;
+            Plugin.Log.LogError(Session.LastError);
+            return false;
+        }
+
+        /// <summary>Join a Steam lobby by id; the session starts when the lobby lets us in (OnLobbyEntered).</summary>
+        public bool JoinSteam(ulong lobby)
+        {
+            Prepare();
+            Session.Leave();
+            SteamLobby.Leave();
+            if (SteamLobby.Join(lobby)) return true;
+            Session.LastError = "join failed: " + SteamLobby.Status;
+            Plugin.Log.LogError(Session.LastError);
+            return false;
+        }
+
+        public void OnLobbyHosted()
+        {
+            try { Session.Host(new SteamTransport(true, Steamworks.CSteamID.Nil, SteamLobby.IsMember, () => Time.realtimeSinceStartup)); }
+            catch (Exception e) { Session.LastError = "host failed: " + e.Message; Plugin.Log.LogError(Session.LastError); SteamLobby.Leave(); }
+        }
+
+        public void OnLobbyEntered(Steamworks.CSteamID owner)
+        {
+            try { Session.Join(new SteamTransport(false, owner, null, () => Time.realtimeSinceStartup)); }
+            catch (Exception e) { Session.LastError = "join failed: " + e.Message; Plugin.Log.LogError(Session.LastError); SteamLobby.Leave(); }
+        }
+
+        public bool Invite() { return SteamLobby.Invite(); }
+
+        public string TransportName
+        {
+            get { return Session.Transport == null ? "none" : Session.Transport is SteamTransport ? "steam" : "udp"; }
+        }
+
+        public void Leave() { Session.Leave(); SteamLobby.Leave(); }
 
         /// <summary>Snapshot for the bridge and the UI.</summary>
         public Dictionary<string, object> State()
@@ -139,6 +188,11 @@ namespace SuperflightCoop
             d["choiceOpen"] = LevelChoice.Open;
             d["choiceReason"] = LevelChoice.Why.ToString();
             d["timeScale"] = (double)Time.timeScale;
+            d["transport"] = TransportName;
+            var st = new Dictionary<string, object>();
+            st["ready"] = SteamLobby.Ready; st["lobby"] = SteamLobby.LobbyCode; st["members"] = SteamLobby.MemberCount;
+            st["status"] = SteamLobby.Status; st["busy"] = SteamLobby.Busy;
+            d["steam"] = st;
             PlayerState local;
             if (Game.ReadLocalState(Session.LocalId, out local))
             {

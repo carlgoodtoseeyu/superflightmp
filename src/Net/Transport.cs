@@ -11,6 +11,8 @@ namespace SuperflightCoop.Net
     {
         bool IsHost { get; }
         string LocalId { get; }
+        /// <summary>Client: how long to wait for the host's Welcome before giving up.</summary>
+        float ConnectTimeout { get; }
         /// <summary>Called on the main thread for every datagram that arrived.</summary>
         void Poll(Action<string, byte[]> onMessage, Action<string> onPeerLost);
         void Send(string peer, byte[] data, bool reliable);
@@ -85,6 +87,7 @@ namespace SuperflightCoop.Net
 
         public bool IsHost { get { return isHost; } }
         public string LocalId { get { return isHost ? "host" : socket.Client.LocalEndPoint.ToString(); } }
+        public float ConnectTimeout { get { return TimeoutSeconds; } }
         public IEnumerable<string> Peers { get { return new List<string>(peers.Keys); } }
 
         static string KeyFor(IPEndPoint ep) { return ep.ToString(); }

@@ -13,7 +13,7 @@ namespace SuperflightCoop
     public class Plugin : BaseUnityPlugin
     {
         public const string Id = "org.coopanything.superflight";
-        public const string Version = "0.1.0";
+        public const string Version = "0.2.0";
 
         public static ManualLogSource Log;
         public static ConfigEntry<string> PlayerName;
@@ -33,6 +33,9 @@ namespace SuperflightCoop
         public static bool CliAutoFlight;
         public static bool CliBot;
         public static bool CliBotAutoChoose;
+        public static bool CliSteamHost;          // --coop-steam-host
+        public static ulong CliSteamJoin;         // --coop-steam-join LOBBYID
+        public static ulong CliConnectLobby;      // +connect_lobby LOBBYID: Steam adds this when an invite starts the game
 
         void Awake()
         {
@@ -84,6 +87,9 @@ namespace SuperflightCoop
                     case "--coop-autoflight": CliAutoFlight = true; break;
                     case "--coop-bot": CliBot = true; break;
                     case "--coop-bot-autochoose": CliBot = true; CliBotAutoChoose = true; break;
+                    case "--coop-steam-host": CliSteamHost = true; break;
+                    case "--coop-steam-join": if (next != null) ulong.TryParse(next, out CliSteamJoin); i++; break;
+                    case "+connect_lobby": if (next != null) ulong.TryParse(next, out CliConnectLobby); i++; break;
                 }
             }
         }
